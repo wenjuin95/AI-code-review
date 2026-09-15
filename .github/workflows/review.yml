@@ -19,7 +19,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    steps:
       - name: Gemini Code Review
         uses: ./
         env:
