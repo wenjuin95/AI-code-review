@@ -17,7 +17,7 @@ function formatReview(
 
   if (issues.length === 0) {
     return `
-## 🤖 Gemini Code Review
+## Code Review
 
 ✅ **No significant issues found.**
 
@@ -27,7 +27,7 @@ in this Pull Request.
   }
 
   let output = `
-## 🤖 Gemini Code Review
+## Code Review
 
 Found **${issues.length} issue(s)**.
 
