@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-export interface GeminiReview {
+export interface ReviewIssue {
   severity: "critical" | "high" | "medium" | "low";
   file: string;
   line: number;
@@ -9,11 +9,12 @@ export interface GeminiReview {
   suggestion: string;
 }
 
-export async function reviewCode(
+export async function reviewWithGemini(
   apiKey: string,
   model: string,
   prompt: string
-): Promise<GeminiReview[]> {
+): Promise<ReviewIssue[]> {
+
   const ai = new GoogleGenAI({
     apiKey
   });
@@ -32,5 +33,11 @@ export async function reviewCode(
     throw new Error("Gemini returned an empty response");
   }
 
-  return JSON.parse(text) as GeminiReview[];
+  const result = JSON.parse(text);
+
+  if (!Array.isArray(result)) {
+    throw new Error("Gemini returned invalid review format");
+  }
+
+  return result;
 }

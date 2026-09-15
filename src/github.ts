@@ -1,24 +1,57 @@
 import * as github from "@actions/github";
 
-export function createGithubClient(token: string) {
-  return github.getOctokit(token);
+export interface PullRequestFile {
+  filename: string;
+  patch?: string;
 }
 
-export async function createReview(
-  token: string,
-  body: string
-) {
-  const octokit = createGithubClient(token);
+export async function getPullRequestDiff(
+  token: string
+): Promise<string> {
+
+  const octokit = github.getOctokit(token);
 
   const owner = github.context.repo.owner;
   const repo = github.context.repo.repo;
   const pullNumber = github.context.issue.number;
 
-  return octokit.rest.pulls.createReview({
+  const { data } =
+    await octokit.rest.pulls.listFiles({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100
+    });
+
+  const files = data as PullRequestFile[];
+
+  return files
+    .filter(file => file.patch)
+    .map(file => {
+      return `
+FILE: ${file.filename}
+
+${file.patch}
+`;
+    })
+    .join("\n");
+}
+
+export async function postReview(
+  token: string,
+  body: string
+): Promise<void> {
+
+  const octokit = github.getOctokit(token);
+
+  const owner = github.context.repo.owner;
+  const repo = github.context.repo.repo;
+  const pullNumber = github.context.issue.number;
+
+  await octokit.rest.issues.createComment({
     owner,
     repo,
-    pull_number: pullNumber,
-    body,
-    event: "COMMENT"
+    issue_number: pullNumber,
+    body
   });
 }

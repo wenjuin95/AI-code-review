@@ -33,22 +33,41 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createGithubClient = createGithubClient;
-exports.createReview = createReview;
+exports.getPullRequestDiff = getPullRequestDiff;
+exports.postReview = postReview;
 const github = __importStar(require("@actions/github"));
-function createGithubClient(token) {
-    return github.getOctokit(token);
-}
-async function createReview(token, body) {
-    const octokit = createGithubClient(token);
+async function getPullRequestDiff(token) {
+    const octokit = github.getOctokit(token);
     const owner = github.context.repo.owner;
     const repo = github.context.repo.repo;
     const pullNumber = github.context.issue.number;
-    return octokit.rest.pulls.createReview({
+    const { data } = await octokit.rest.pulls.listFiles({
         owner,
         repo,
         pull_number: pullNumber,
-        body,
-        event: "COMMENT"
+        per_page: 100
+    });
+    const files = data;
+    return files
+        .filter(file => file.patch)
+        .map(file => {
+        return `
+FILE: ${file.filename}
+
+${file.patch}
+`;
+    })
+        .join("\n");
+}
+async function postReview(token, body) {
+    const octokit = github.getOctokit(token);
+    const owner = github.context.repo.owner;
+    const repo = github.context.repo.repo;
+    const pullNumber = github.context.issue.number;
+    await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        body
     });
 }

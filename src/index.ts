@@ -1,11 +1,71 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import * as github from "@actions/github";
-import { reviewCode } from "./gemini";
-import { formatReview } from "./parser";
+import {
+  getPullRequestDiff,
+  postReview
+} from "./github.js";
 
-async function main() {
+import {
+  reviewWithGemini,
+  ReviewIssue
+} from "./gemini.js";
+
+function formatReview(
+  issues: ReviewIssue[]
+): string {
+
+  if (issues.length === 0) {
+    return `
+## 🤖 Gemini Code Review
+
+✅ **No significant issues found.**
+
+Gemini did not identify any actionable problems
+in this Pull Request.
+`;
+  }
+
+  let output = `
+## 🤖 Gemini Code Review
+
+Found **${issues.length} issue(s)**.
+
+`;
+
+  for (const issue of issues) {
+
+    const emoji =
+      issue.severity === "critical"
+        ? "🚨"
+        : issue.severity === "high"
+        ? "🔴"
+        : issue.severity === "medium"
+        ? "🟠"
+        : "🟡";
+
+    output += `
+### ${emoji} ${issue.title}
+
+**Severity:** \`${issue.severity}\`
+
+**File:** \`${issue.file}:${issue.line}\`
+
+${issue.description}
+
+**Suggestion:**
+
+${issue.suggestion}
+
+---
+`;
+  }
+
+  return output;
+}
+
+async function main(): Promise<void> {
+
   const githubToken = process.env.GITHUB_TOKEN;
   const geminiApiKey = process.env.GEMINI_API_KEY;
 
@@ -18,70 +78,55 @@ async function main() {
   }
 
   const model =
-    process.env.GEMINI_MODEL ||
+    process.env.GEMINI_MODEL ??
     "gemini-2.5-flash";
 
-  const octokit = github.getOctokit(githubToken);
+  console.log("Getting Pull Request diff...");
 
-  const owner = github.context.repo.owner;
-  const repo = github.context.repo.repo;
-  const pullNumber = github.context.issue.number;
-
-  const { data: files } =
-    await octokit.rest.pulls.listFiles({
-      owner,
-      repo,
-      pull_number: pullNumber,
-      per_page: 100
-    });
-
-  const diff = files
-    .filter(file => file.patch)
-    .map(file => {
-      return `
-FILE: ${file.filename}
-
-${file.patch}
-`;
-    })
-    .join("\n");
+  const diff =
+    await getPullRequestDiff(githubToken);
 
   if (!diff.trim()) {
-    console.log("No reviewable diff found.");
+    console.log("No changes found.");
     return;
   }
 
   const promptPath = path.join(
     process.cwd(),
     "prompts",
-    "code-review.txt"
+    "review.txt"
   );
 
-  let prompt = fs.readFileSync(promptPath, "utf8");
+  let prompt =
+    fs.readFileSync(promptPath, "utf8");
 
-  prompt = prompt.replace(
-    "{{DIFF}}",
-    diff
+  prompt =
+    prompt.replace("{{DIFF}}", diff);
+
+  console.log("Sending code to Gemini...");
+
+  const issues =
+    await reviewWithGemini(
+      geminiApiKey,
+      model,
+      prompt
+    );
+
+  console.log(
+    `Gemini found ${issues.length} issue(s).`
   );
 
-  console.log("Sending PR to Gemini...");
+  const review =
+    formatReview(issues);
 
-  const reviews = await reviewCode(
-    geminiApiKey,
-    model,
-    prompt
+  console.log("Posting review to GitHub...");
+
+  await postReview(
+    githubToken,
+    review
   );
 
-  const body = formatReview(reviews);
-
-  await octokit.rest.issues.createComment({
-    owner,
-    repo,
-    issue_number: pullNumber,
-    body
-  });
-
-  console.log("Review posted.");
+  console.log("Review posted successfully.");
 }
 
 main().catch(error => {

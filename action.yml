@@ -1,20 +1,7 @@
-name: Gemini Code Review
+name: Gemini AI Code Review
 
-description: AI-powered Pull Request code review using Google Gemini
-
-inputs:
-  gemini-model:
-    description: Gemini model to use
-    required: false
-    default: gemini-2.5-flash
+description: Review Pull Requests using Google Gemini
 
 runs:
   using: node20
   main: dist/index.js
-
-
-# - name: Gemini Code Review
-#   uses: ryu/gemini-code-review@v1
-#   env:
-#     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

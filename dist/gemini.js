@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reviewCode = reviewCode;
+exports.reviewWithGemini = reviewWithGemini;
 const genai_1 = require("@google/genai");
-async function reviewCode(apiKey, model, prompt) {
+async function reviewWithGemini(apiKey, model, prompt) {
     const ai = new genai_1.GoogleGenAI({
         apiKey
     });
@@ -17,5 +17,9 @@ async function reviewCode(apiKey, model, prompt) {
     if (!text) {
         throw new Error("Gemini returned an empty response");
     }
-    return JSON.parse(text);
+    const result = JSON.parse(text);
+    if (!Array.isArray(result)) {
+        throw new Error("Gemini returned invalid review format");
+    }
+    return result;
 }
