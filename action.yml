@@ -3,5 +3,5 @@ name: Gemini AI Code Review
 description: Review Pull Requests using Google Gemini
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
