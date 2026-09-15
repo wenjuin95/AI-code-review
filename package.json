@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"build": "tsc"
+    "build": "tsc && ncc build lib/index.js -o dist"
   },
   "repository": {
     "type": "git",
@@ -20,12 +20,13 @@
   },
   "homepage": "https://github.com/wenjuin95/AI-code-review#readme",
   "dependencies": {
-    "@actions/core": "^3.0.1",
-    "@actions/github": "^9.1.1",
+    "@actions/core": "^2.0.3",
+    "@actions/github": "^6.0.1",
     "@google/genai": "^2.22.0"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
+    "@vercel/ncc": "^0.45.0",
     "typescript": "^7.0.2"
   }
 }
