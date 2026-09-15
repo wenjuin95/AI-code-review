@@ -48209,7 +48209,7 @@ const gemini_js_1 = __nccwpck_require__(5097);
 function formatReview(issues) {
     if (issues.length === 0) {
         return `
-## 🤖 Gemini Code Review
+## Code Review
 
 ✅ **No significant issues found.**
 
@@ -48218,7 +48218,7 @@ in this Pull Request.
 `;
     }
     let output = `
-## 🤖 Gemini Code Review
+## Code Review
 
 Found **${issues.length} issue(s)**.
 
@@ -48266,7 +48266,7 @@ async function main() {
         console.log("No changes found.");
         return;
     }
-    const promptPath = path.join(process.cwd(), "prompts", "review.txt");
+    const promptPath = path.join(__dirname, "..", "prompts", "review.txt");
     let prompt = fs.readFileSync(promptPath, "utf8");
     prompt =
         prompt.replace("{{DIFF}}", diff);

@@ -92,7 +92,8 @@ async function main(): Promise<void> {
   }
 
   const promptPath = path.join(
-    process.cwd(),
+    __dirname,
+	"..",
     "prompts",
     "review.txt"
   );
