@@ -1,0 +1,37 @@
+name: Gemini Code Review
+
+on:
+  workflow_call:
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+
+    inputs:
+      gemini-model:
+        required: false
+        type: string
+        default: gemini-2.5-flash
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Gemini Code Review
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ inputs.gemini-model }}
